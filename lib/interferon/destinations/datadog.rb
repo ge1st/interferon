@@ -93,6 +93,7 @@ module Interferon::Destinations
         :message => message,
         :silenced => alert['silenced'] || alert['silenced_until'] > Time.now,
         :notify_no_data => alert['notify_no_data'],
+        :notify_audit => alert['notify_audit'],
         :timeout_h => nil,
       }
 
