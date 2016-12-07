@@ -54,14 +54,14 @@ module Interferon::Destinations
 
     def existing_alerts
       unless @existing_alerts
-        resp = @dog.get_all_alerts()
+        resp = @dog.get_all_monitors()
 
         code = resp[0].to_i
         if code != 200
           raise "Failed to retrieve existing alerts from datadog. #{code.to_s}: #{resp[1].inspect}"
         end
 
-        alerts = resp[1]['alerts']
+        alerts = resp[1]
 
         # key alerts by name
         @existing_alerts = Hash[alerts.map{ |a| [a['name'], a] }]
@@ -109,7 +109,8 @@ module Interferon::Destinations
         action = :creating
         log.debug("new alert #{alert['name']}")
 
-        resp = @dog.alert(
+        resp = @dog.monitor(
+          alert['metric']['datadog_type'],
           alert['metric']['datadog_query'].strip,
           alert_opts,
         )
@@ -120,7 +121,7 @@ module Interferon::Destinations
         id = existing_alerts[alert['name']]['id']
         log.debug("updating existing alert #{id} (#{alert['name']})")
 
-        resp = @dog.update_alert(
+        resp = @dog.update_monitor(
           id,
           alert['metric']['datadog_query'].strip,
           alert_opts
@@ -175,7 +176,7 @@ module Interferon::Destinations
     def remove_alert(alert)
       if alert['message'].include?(ALERT_KEY)
         log.debug("deleting alert #{alert['id']} (#{alert['name']})")
-        @dog.delete_alert(alert['id'])
+        @dog.delete_monitor(alert['id'])
         @stats[:alerts_deleted] += 1
       else
         log.warn("not deleting manually-created alert #{alert['id']} (#{alert['name']})")
